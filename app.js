@@ -8,16 +8,11 @@ const sizeInput = document.querySelector("#drawSize");
 const canvas = document.querySelector("#doodleCanvas");
 const ctx = canvas.getContext("2d");
 
+const clientId = crypto.randomUUID();
 let drawingEnabled = false;
 let isDrawing = false;
 let lastPoint = null;
-
-const botReplies = [
-  "좋아요. 조금 더 자세히 말해줘도 돼요.",
-  "확인했어요. 이 채팅은 데모라서 브라우저 안에서만 동작해요.",
-  "낙서 기능을 켜면 화면 위에 바로 그릴 수 있어요.",
-  "메시지와 낙서는 새로고침하면 초기화됩니다.",
-];
+let lastRenderedIds = "";
 
 function resizeCanvas() {
   const snapshot = document.createElement("canvas");
@@ -34,18 +29,43 @@ function resizeCanvas() {
   ctx.drawImage(snapshot, 0, 0, snapshot.width / ratio, snapshot.height / ratio);
 }
 
-function addMessage(author, text, type) {
+function createMessage(message) {
   const article = document.createElement("article");
-  article.className = `message ${type}`;
-  article.innerHTML = `<span>${author}</span><p></p>`;
-  article.querySelector("p").textContent = text;
-  messages.append(article);
+  article.className = `message ${message.clientId === clientId ? "mine" : "other"}`;
+  article.innerHTML = `<span></span><p></p>`;
+  article.querySelector("span").textContent = message.name || "Guest";
+  article.querySelector("p").textContent = message.text;
+  return article;
+}
+
+function renderMessages(nextMessages) {
+  const nextIds = nextMessages.map((message) => message.id).join(",");
+  if (nextIds === lastRenderedIds) return;
+  lastRenderedIds = nextIds;
+  messages.replaceChildren(...nextMessages.map(createMessage));
   messages.scrollTop = messages.scrollHeight;
 }
 
-function replyLater() {
-  const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
-  window.setTimeout(() => addMessage("Demo Bot", reply, "other"), 450);
+async function loadMessages() {
+  try {
+    const response = await fetch("/api/messages", { cache: "no-store" });
+    if (!response.ok) throw new Error("Message load failed");
+    const data = await response.json();
+    renderMessages(data.messages);
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
+async function sendMessage(text) {
+  const response = await fetch("/api/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, clientId, name: "Guest" }),
+  });
+  if (!response.ok) throw new Error("Message send failed");
+  const data = await response.json();
+  renderMessages(data.messages);
 }
 
 function pointFromEvent(event) {
@@ -81,13 +101,19 @@ function stopDrawing() {
   lastPoint = null;
 }
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = input.value.trim();
   if (!text) return;
-  addMessage("Me", text, "mine");
   input.value = "";
-  replyLater();
+  input.focus();
+
+  try {
+    await sendMessage(text);
+  } catch (error) {
+    input.value = text;
+    console.warn(error);
+  }
 });
 
 toggle.addEventListener("click", () => {
@@ -110,3 +136,5 @@ window.addEventListener("touchend", stopDrawing);
 window.addEventListener("resize", resizeCanvas);
 
 resizeCanvas();
+loadMessages();
+window.setInterval(loadMessages, 1000);
