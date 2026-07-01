@@ -151,6 +151,8 @@ h1 {
 }
 
 .doodle-panel {
+  position: relative;
+  z-index: 30;
   display: grid;
   gap: 18px;
   padding: 18px;
@@ -188,6 +190,7 @@ h1 {
   height: 100vh;
   pointer-events: none;
   touch-action: none;
+  user-select: none;
 }
 
 body.drawing #doodleCanvas {

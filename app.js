@@ -32,7 +32,7 @@ function resizeCanvas() {
 function createMessage(message) {
   const article = document.createElement("article");
   article.className = `message ${message.clientId === clientId ? "mine" : "other"}`;
-  article.innerHTML = `<span></span><p></p>`;
+  article.innerHTML = "<span></span><p></p>";
   article.querySelector("span").textContent = message.name || "Guest";
   article.querySelector("p").textContent = message.text;
   return article;
@@ -69,10 +69,9 @@ async function sendMessage(text) {
 }
 
 function pointFromEvent(event) {
-  const touch = event.touches?.[0] || event.changedTouches?.[0];
   return {
-    x: touch ? touch.clientX : event.clientX,
-    y: touch ? touch.clientY : event.clientY,
+    x: event.clientX,
+    y: event.clientY,
   };
 }
 
@@ -80,6 +79,7 @@ function startDrawing(event) {
   if (!drawingEnabled) return;
   isDrawing = true;
   lastPoint = pointFromEvent(event);
+  canvas.setPointerCapture?.(event.pointerId);
   event.preventDefault();
 }
 
@@ -96,9 +96,12 @@ function draw(event) {
   event.preventDefault();
 }
 
-function stopDrawing() {
+function stopDrawing(event) {
   isDrawing = false;
   lastPoint = null;
+  if (event?.pointerId !== undefined) {
+    canvas.releasePointerCapture?.(event.pointerId);
+  }
 }
 
 form.addEventListener("submit", async (event) => {
@@ -124,15 +127,13 @@ toggle.addEventListener("click", () => {
 });
 
 clearButton.addEventListener("click", () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 });
 
-canvas.addEventListener("mousedown", startDrawing);
-canvas.addEventListener("mousemove", draw);
-window.addEventListener("mouseup", stopDrawing);
-canvas.addEventListener("touchstart", startDrawing, { passive: false });
-canvas.addEventListener("touchmove", draw, { passive: false });
-window.addEventListener("touchend", stopDrawing);
+canvas.addEventListener("pointerdown", startDrawing);
+canvas.addEventListener("pointermove", draw);
+canvas.addEventListener("pointerup", stopDrawing);
+canvas.addEventListener("pointercancel", stopDrawing);
 window.addEventListener("resize", resizeCanvas);
 
 resizeCanvas();
