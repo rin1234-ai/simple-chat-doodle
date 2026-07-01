@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simple Chat Doodle</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="chat-shell" aria-label="채팅앱">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Live mock chat</p>
+            <h1>Simple Chat</h1>
+          </div>
+          <button class="tool-button" id="drawToggle" type="button">낙서 켜기</button>
+        </header>
+
+        <section class="messages" id="messages" aria-live="polite">
+          <article class="message other">
+            <span>Demo Bot</span>
+            <p>안녕하세요. 메시지를 보내면 간단히 답장해요.</p>
+          </article>
+          <article class="message mine">
+            <span>Me</span>
+            <p>화면 위에 낙서도 할 수 있어요.</p>
+          </article>
+        </section>
+
+        <form class="composer" id="chatForm">
+          <input
+            id="messageInput"
+            type="text"
+            autocomplete="off"
+            placeholder="메시지를 입력하세요"
+            aria-label="메시지"
+          />
+          <button type="submit">보내기</button>
+        </form>
+      </section>
+
+      <section class="doodle-panel" aria-label="낙서 도구">
+        <label>
+          색상
+          <input id="drawColor" type="color" value="#f05a3f" />
+        </label>
+        <label>
+          굵기
+          <input id="drawSize" type="range" min="2" max="28" value="8" />
+        </label>
+        <button id="clearCanvas" type="button">낙서 지우기</button>
+      </section>
+    </main>
+
+    <canvas id="doodleCanvas" aria-hidden="true"></canvas>
+    <script src="app.js"></script>
+  </body>
+</html>
